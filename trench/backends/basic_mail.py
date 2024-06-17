@@ -24,13 +24,21 @@ class SendMailMessageDispatcher(AbstractMessageDispatcher):
 
     def dispatch_message(self) -> DispatchResponse:
         context = {"code": self.create_code()}
-        email_plain_template = self._config[EMAIL_PLAIN_TEMPLATE]
-        email_html_template = self._config[EMAIL_HTML_TEMPLATE]
+        email_plain_template = self._config.get("EMAIL_PLAIN_TEMPLATE")
+        if email_plain_template:
+            plain_text_message = get_template(email_plain_template).render(context)
+        else:
+            plain_text_message = None
+        email_html_template = self._config.get("EMAIL_HTML_TEMPLATE")
+        if email_html_template:
+            html_message = get_template(email_html_template).render(context)
+        else:
+            html_message = None
         try:
             send_mail(
                 subject=self._config.get(EMAIL_SUBJECT),
-                message=get_template(email_plain_template).render(context),
-                html_message=get_template(email_html_template).render(context),
+                message=plain_text_message,
+                html_message=html_message,
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=(self._to,),
                 fail_silently=False,
